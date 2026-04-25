@@ -73,8 +73,8 @@ No. Windows vive en el disco físico de tu computadora. Tu comando dd afectará 
 3. ¿Qué va a pasar con la VM cuando grabe y ejecute esto?
 Aquí es donde la cosa se pone interesante:
 
-Sobreescritura total: Si protected_mode.img es una imagen de un sector de arranque (como parece por nuestra charla anterior), al escribirla en /dev/sdX (probablemente /dev/sda), borrarás el GRUB de Linux Mint.
+Sobreescritura total: Si protected_mode.img es una imagen de un sector de arranque, borrarás el GRUB de Linux Mint.
 
-Mint dejará de arrancar: La próxima vez que reinicies la VM, ya no entrarás a Linux Mint. En su lugar, se ejecutará el código de tu imagen (el "Hello World" en Modo Protegido).
+Mint dejará de arrancar: La próxima vez que reinicies la VM, ya no entrarás a Linux Mint. En su lugar, se ejecutará el código de tu imagen.
 
 Pérdida de datos: Si la imagen .img es grande, sobreescribirá la tabla de particiones y tus archivos de Mint. Si es solo de 512 bytes, solo destruirá el arranque de Mint, pero tus archivos seguirán ahí (aunque inaccesibles sin reparar el boot).
