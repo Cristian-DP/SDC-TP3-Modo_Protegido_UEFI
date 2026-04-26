@@ -36,61 +36,71 @@ si te animas podes empezar por aquí
 
 - Crear un código assembler que pueda pasar a modo protegido (sin macros).
 
-Para pasar a modo protegido necesitas tres cosas: una GDT definida, cargarla con lgdt, y activar el bit PE de CR0.
-
-```
-.code16
-.global _start
-_start:
-    cli                         # 1. Desactivar interrupciones
-    lgdt gdt_descriptor         # 2. Cargar la tabla de segmentos
-
-    mov %cr0, %eax
-    or $0x1, %eax               # 3. Activar bit PE (Protection Enable)
-    mov %eax, %cr0
-
-    ljmp $0x08, $next_step      # 4. Far jump para limpiar el pipeline (CS = 0x08)
-
-.code32
-next_step:
-    mov $0x10, %ax              # Cargar selectores de datos (GDT index 2)
-    mov %ax, %ds
-    mov %ax, %ss
-    # ... aquí ya estás en modo protegido ...
-    jmp .
-
-# ESTRUCTURA DE LA GDT
-gdt_start:
-    .quad 0x0                   # Descriptor nulo (obligatorio)
-gdt_code:                       # Selector 0x08
-    .word 0xffff, 0x0000, 0x9a00, 0x00cf
-gdt_data:                       # Selector 0x10
-    .word 0xffff, 0x0000, 0x9200, 0x00cf
-gdt_end:
-
-gdt_descriptor:
-    .word gdt_end - gdt_start - 1
-    .long gdt_start
-
-.org 510
-.word 0xaa55
-```
+[ir a code](./code/sin_macros.S)
 
 - ¿Cómo sería un programa que tenga dos descriptores de memoria diferentes, uno para cada segmento (código y datos) en espacios de memoria diferenciados? 
 
-En el ejemplo anterior, ambos segmentos tienen Base 0 y Límite 4GB (se solapan). Para que sean diferenciados, cambias la Base en la GDT:
-* Descriptor Código: Base 0x00000000, Límite 0x000FFFFF.
-* Descriptor Datos: Base 0x00100000, Límite 0x000FFFFF.
+Para lograr que los segmentos de código y datos estén en espacios de memoria diferenciados, debemos modificar la Base de los descriptores en la GDT.
 
-Si el segmento de datos empieza en 0x00100000, cuando el programa intente escribir en la dirección lógica 0x0, el hardware escribirá en la física 0x00100000. Esto es Segmentación Pura.
+En el código anterior, ambos tenían Base = 0x00000000 (técnica conocida como Flat Memory Model). En el archivo sin_macros_2.S se puede visualizar el cambio.
+
+```
+gdt_data:                       # Selector 0x10
+    .word 0xffff, 0x0000, 0x9201, 0x00cf # El '01' en el byte 5 pone la base en 0x10000
+```
 
 - Cambiar los bits de acceso del segmento de datos para que sea de solo lectura,  intentar escribir, ¿Que sucede? ¿Que debería suceder a continuación? (revisar el teórico) Verificarlo con gdb. 
 
-Si cambias el byte de acceso del descriptor de datos de 0x92 (Lectura/Escritura) a 0x90 (Solo Lectura):
+El segmento de datos (gdt_data) utiliza el valor de acceso 0x92 (que es 10010010 en binario).
 
-* ¿Qué sucede?: Al intentar hacer un mov %eax, (%ebx), el procesador detecta que el descriptor apuntado por el registro de segmento tiene el bit de escritura en 0.
-* ¿Qué debería suceder a continuación?: El procesador lanza una Excepción de Protección General (#GP / General Protection Fault).
-* Verificación con GDB: En QEMU, puedes usar info registers o maintenance packet qRcmd,info-registers. Verás que el registro EIP deja de avanzar y el procesador entra en un bucle de excepción o se detiene. Si tienes un manejador de excepciones, verás que el código de error en el stack apunta al selector que causó el fallo.
+* Bit 1 (W): Es el bit de "Writable". Al estar en 1, permite escritura.
+* Bit 0 (A): Bit de "Accessed".
+
+Para que sea de solo lectura, debemos cambiar ese 0x92 por 0x90 (binario 10010000).
+
+```
+gdt_data:                       # Selector 0x10
+    .word 0xffff, 0x0000, 0x9001, 0x00cf  # Cambiado 92 por 90 (Solo Lectura)
+```
+
+* **¿Qué sucede al intentar escribir?** En la sección .code32, se realiza la siguiente operación: mov %al, (%edi) .
+Al ejecutar esta instrucción con el segmento de datos en solo lectura: 
+La Unidad de Gestión de Memoria (MMU) del procesador verifica el descriptor asociado al selector cargado en %ds (o el segmento usado para escribir).
+
+Al detectar que el bit de escritura es 0 y la instrucción intenta una escritura, el hardware detiene la ejecución inmediatamente antes de que la memoria se vea afectada.
+
+* **¿Qué debería suceder a continuación? (Según el teórico)**
+
+A nivel de arquitectura x86, sucede lo siguiente:
+
+* Excepción de Protección General (#GP): El procesador genera una interrupción de tipo Fault (vector 13).
+* Búsqueda en la IDT: El procesador intenta buscar en la Interrupt Descriptor Table (IDT) el manejador para la excepción 13.
+* Triple Fault: Como en tu código actual no tienes una IDT configurada, el procesador falla al intentar manejar la excepción #GP, lo que genera una excepción de "Doble Falta" y, finalmente, al no poder manejar esa tampoco, ocurre un Triple Fault.
+* Reinicio: En una PC real o QEMU, un Triple Fault provoca el reinicio instantáneo de la máquina (un reset por hardware).
+
+* **Verificación con GDB**
+
+Para ver y confirmar que el procesador se detiene por el error de protección, se uso:
+
+* Lanza QEMU esperando a GDB: qemu-system-i386 -s -S -drive format=raw,file=kernel.img (donde -s: Abre un servidor GDB en el puerto 1234. 
+-S: Congela la CPU al inicio.)
+
+En otra terminal, se uso GDB:
+
+```
+gdb -ex "target remote localhost:1234" -ex "set architecture i8086"
+```
+
+Se colocó un breakpoint antes del desastre (Como sabemos que la BIOS carga el código en 0x7c00):
+
+b *0x7c00
+c (continuar)
+
+* Observa el fallo:
+* 
+Avanzando con si (step instruction) llegamos a la instrucción mov %al, (%edi), verás que al intentar ejecutarla, QEMU se reinicia o, si inspeccionas los registros con info registers, verás que el registro EIP no avanza o salta a una dirección de error de la BIOS después del reset.
+
+--
 
 - En modo protegido, ¿Con qué valor se cargan los registros de segmento ? ¿Porque? 
 
