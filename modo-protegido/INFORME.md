@@ -35,8 +35,63 @@ si te animas podes empezar por aquí
 ## Cuestionario
 
 - Crear un código assembler que pueda pasar a modo protegido (sin macros).
+
+Para pasar a modo protegido necesitas tres cosas: una GDT definida, cargarla con lgdt, y activar el bit PE de CR0.
+
+````asm
+.code16
+.global _start
+_start:
+    cli                         # 1. Desactivar interrupciones
+    lgdt gdt_descriptor         # 2. Cargar la tabla de segmentos
+
+    mov %cr0, %eax
+    or $0x1, %eax               # 3. Activar bit PE (Protection Enable)
+    mov %eax, %cr0
+
+    ljmp $0x08, $next_step      # 4. Far jump para limpiar el pipeline (CS = 0x08)
+
+.code32
+next_step:
+    mov $0x10, %ax              # Cargar selectores de datos (GDT index 2)
+    mov %ax, %ds
+    mov %ax, %ss
+    # ... aquí ya estás en modo protegido ...
+    jmp .
+
+# ESTRUCTURA DE LA GDT
+gdt_start:
+    .quad 0x0                   # Descriptor nulo (obligatorio)
+gdt_code:                       # Selector 0x08
+    .word 0xffff, 0x0000, 0x9a00, 0x00cf
+gdt_data:                       # Selector 0x10
+    .word 0xffff, 0x0000, 0x9200, 0x00cf
+gdt_end:
+
+gdt_descriptor:
+    .word gdt_end - gdt_start - 1
+    .long gdt_start
+
+.org 510
+.word 0xaa55
+```
+
 - ¿Cómo sería un programa que tenga dos descriptores de memoria diferentes, uno para cada segmento (código y datos) en espacios de memoria diferenciados? 
+
+En el ejemplo anterior, ambos segmentos tienen Base 0 y Límite 4GB (se solapan). Para que sean diferenciados, cambias la Base en la GDT:
+* Descriptor Código: Base 0x00000000, Límite 0x000FFFFF.
+* Descriptor Datos: Base 0x00100000, Límite 0x000FFFFF.
+
+Si el segmento de datos empieza en 0x00100000, cuando el programa intente escribir en la dirección lógica 0x0, el hardware escribirá en la física 0x00100000. Esto es Segmentación Pura.
+
 - Cambiar los bits de acceso del segmento de datos para que sea de solo lectura,  intentar escribir, ¿Que sucede? ¿Que debería suceder a continuación? (revisar el teórico) Verificarlo con gdb. 
+
+Si cambias el byte de acceso del descriptor de datos de 0x92 (Lectura/Escritura) a 0x90 (Solo Lectura):
+
+* ¿Qué sucede?: Al intentar hacer un mov %eax, (%ebx), el procesador detecta que el descriptor apuntado por el registro de segmento tiene el bit de escritura en 0.
+* ¿Qué debería suceder a continuación?: El procesador lanza una Excepción de Protección General (#GP / General Protection Fault).
+* Verificación con GDB: En QEMU, puedes usar info registers o maintenance packet qRcmd,info-registers. Verás que el registro EIP deja de avanzar y el procesador entra en un bucle de excepción o se detiene. Si tienes un manejador de excepciones, verás que el código de error en el stack apunta al selector que causó el fallo.
+
 - En modo protegido, ¿Con qué valor se cargan los registros de segmento ? ¿Porque? 
 
 ## Laboratorio: Compilar y correr una aplicación sin SO
