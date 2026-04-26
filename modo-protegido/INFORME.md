@@ -60,6 +60,9 @@ si te animas podes empezar por aquí
 
 * **Parte 3: Grabar la imagen y correrla en HW real**
 
+
+![paso 3 - disk](../images/parte3-paso1-disk.png)
+
 1. ¿Se verá afectado el disco de mi PC real? 
 
 No, siempre y cuando selecione la letra correcta. Al estar dentro de una máquina virtual (Mint), el sistema operativo solo ve los dispositivos que la VM le permite ver. El /dev/sdX que ve Mint es un disco virtual (un archivo .vdi o .vmdk en tu Windows).
