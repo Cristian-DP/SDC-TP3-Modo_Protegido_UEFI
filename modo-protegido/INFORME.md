@@ -38,7 +38,7 @@ si te animas podes empezar por aquí
 
 Para pasar a modo protegido necesitas tres cosas: una GDT definida, cargarla con lgdt, y activar el bit PE de CR0.
 
-````asm
+```
 .code16
 .global _start
 _start:
@@ -93,6 +93,21 @@ Si cambias el byte de acceso del descriptor de datos de 0x92 (Lectura/Escritura)
 * Verificación con GDB: En QEMU, puedes usar info registers o maintenance packet qRcmd,info-registers. Verás que el registro EIP deja de avanzar y el procesador entra en un bucle de excepción o se detiene. Si tienes un manejador de excepciones, verás que el código de error en el stack apunta al selector que causó el fallo.
 
 - En modo protegido, ¿Con qué valor se cargan los registros de segmento ? ¿Porque? 
+
+En Modo Real, cargabas una dirección (ej: 0x07C0). En Modo Protegido, los registros (CS, DS, SS, etc.) se cargan con un Selector de Segmento.
+
+¿Con qué valor?: Con un índice que apunta a la GDT. Por ejemplo, 0x08 (binario 00001000).
+
+¿Por qué?: Porque el registro ya no es parte de la dirección física. Ahora funciona como un puntero a una tabla.
+
+Los bits 3-15 son el Índice en la GDT.
+
+El bit 2 es el indicador TI (GDT o LDT).
+
+Los bits 0-1 son el RPL (Nivel de privilegio requerido, de 0 a 3).
+
+Al cargar 0x08, le dices al procesador: "Usa las reglas (base, límite, permisos) definidas en la entrada 1 de la Tabla Global de Descriptores".
+
 
 ## Laboratorio: Compilar y correr una aplicación sin SO
 
