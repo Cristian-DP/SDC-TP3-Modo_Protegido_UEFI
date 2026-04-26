@@ -58,8 +58,9 @@ si te animas podes empezar por aquí
 
 ![paso 1 - protected](../images/parte2-paso1-protected.png)
 
-* **Parte 3: Grabar la imagen y correrla en HW real**
+* **Parte 3: Grabar la imagen y correrla en HW real (Se usa vBox)**
 
+[Link al video deon se carga la vm con protected.img](https://drive.google.com/file/d/1YpCq4X7zdX75tpLB3bAOjuOSMB27jK2I/view?usp=sharing)
 
 ![paso 3 - disk](../images/parte3-paso1-disk.png)
 
