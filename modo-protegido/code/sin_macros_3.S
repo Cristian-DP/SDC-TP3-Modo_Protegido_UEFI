@@ -73,7 +73,7 @@ gdt_code:                       # Selector 0x08
     .word 0xffff, 0x0000, 0x9a00, 0x00cf
 
 gdt_data:                       # Selector 0x10
-    .word 0xffff, 0x0000, 0x9001, 0x00cf  # Cambiado 92 por 90 (Solo Lectura)
+    .word 0xffff, 0x0000, 0x9000, 0x00cf  # Cambiado 92 por 90 (Solo Lectura)
 gdt_end:
 
 gdt_descriptor:
