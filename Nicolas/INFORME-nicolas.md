@@ -94,9 +94,9 @@ Se intentó arrancar desde el pendrive en una **HP Pavilion** (firmware UEFI) y 
 
 #### ¿Qué es UEFI? ¿Cómo se usa? Función ejemplo
 
-UEFI (Unified Extensible Firmware Interface) es el estándar moderno de firmware que reemplaza a la BIOS tradicional. Opera en modo protegido (32 o 64 bits) y expone su funcionalidad a través de una tabla de punteros a funciones, a diferencia de la BIOS que usa interrupciones de 16 bits en modo real.
+UEFI (Unified Extensible Firmware Interface) es el estándar moderno de firmware que reemplaza a la BIOS tradicional. A diferencia de la BIOS, que solo es accesible en modo real mediante interrupciones, UEFI actúa como puente entre el hardware y el sistema operativo, ofreciendo servicios tanto durante el arranque como en tiempo de ejecución.
 
-Un programa UEFI se desarrolla en C usando el EDK II. El firmware provee al programa un puntero a la tabla de servicios del sistema (`EFI_SYSTEM_TABLE`) desde donde se accede a todos los servicios.
+Un programa UEFI se desarrolla en C usando el EDK II. El firmware le pasa al programa un puntero a la tabla de servicios del sistema (`EFI_SYSTEM_TABLE`) desde donde se puede acceder a todo lo que ofrece el firmware.
 
 **Ejemplo de función — `OutputString()`:**
 
@@ -113,7 +113,7 @@ Pertenece al protocolo `EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL` y permite imprimir text
 - **ThinkPwn (2016):** Escalada de privilegios en el SMM de equipos Lenovo ThinkPad que permitía deshabilitar Secure Boot y modificar la flash del firmware.
 - **PKfail (2024):** Una clave de plataforma de prueba marcada como "DO NOT TRUST" fue incluida en cientos de dispositivos de múltiples fabricantes, permitiendo firmar bootloaders maliciosos eludiendo Secure Boot.
 
-Estos ataques son especialmente graves porque pueden instalar bootkits UEFI que sobreviven al formateo del disco.
+Estos ataques son especialmente peligrosos porque el firmware se ejecuta antes que el sistema operativo, por lo que un exploit exitoso puede persistir incluso después de reinstalar el SO.
 
 #### ¿Qué es el CSME y el Intel MEBx?
 
@@ -295,7 +295,7 @@ El código define dos descriptores en la GDT con bases distintas:
 - **Segmento de código (selector `0x08`):** base `0x00000000`, cubre todo el espacio de 4GB. Byte de acceso `0x9A` → ejecutable y legible, no escribible (Type=`1010`).
 - **Segmento de datos (selector `0x10`):** base `0x00100000` (1 MB). Byte de acceso `0x92` → escribible (Type=`0010`).
 
-La diferenciación de bases implica que la misma dirección lógica apunta a diferentes direcciones físicas según el segmento, ilustrando el mecanismo de protección de la segmentación x86.
+Como código y datos tienen bases distintas, la misma dirección lógica apunta a lugares físicos diferentes según qué registro de segmento se use.
 
 #### Experimento: segmento de datos read-only
 
@@ -333,12 +333,4 @@ Es obligatorio cargar todos los registros al entrar en modo protegido porque cad
 
 ## Conclusiones
 
-Este TP permitió comprender el proceso completo de evolución de un procesador x86 desde el modo real al modo protegido. Los conceptos clave aprendidos fueron:
-
-- La **BIOS** y su rol en el arranque legacy vs. **UEFI** como estándar moderno con mayores capacidades pero también mayor superficie de ataque.
-- El **linker** como herramienta fundamental para posicionar código en direcciones específicas de memoria en entornos bare-metal.
-- La **GDT** como estructura central del modo protegido: sin ella el procesador no puede operar en 32 bits.
-- La **protección de memoria por segmentación**: el procesador verifica permisos antes de cada acceso y genera excepciones controladas ante violaciones.
-- El uso de **QEMU y GDB** para depurar código que se ejecuta directamente sobre el hardware, instrucción a instrucción.
-
-La imposibilidad de ejecutar el bootloader MBR en hardware moderno con UEFI ilustra concretamente la diferencia entre los dos estándares de firmware y justifica la existencia de proyectos como coreboot.
+El TP permitió entender cómo un procesador x86 arranca en modo real y cómo se lo lleva al modo protegido paso a paso. Lo más interesante fue ver en la práctica con GDB cómo el procesador detecta una escritura en un segmento read-only y resetea la máquina — algo que en modo real simplemente no existe. También quedó claro por qué UEFI está reemplazando a la BIOS: más capacidades, pero también más superficie de ataque, lo que justifica proyectos como coreboot.
