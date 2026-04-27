@@ -45,9 +45,11 @@ si te animas podes empezar por aquí
 
 * **Parte 1 – Clonar el repositorio Git y el submódulo**
 
-[path al modulo clonado](./libs/protected-mode-sdc)
+[path al modulo clonado](./libs)
 
 * **Paso 2: Trabajando con submódulos.**
+
+Se agega el modulo del punto 1
 
 ![paso 2](./images/paso2.png)
 
@@ -56,13 +58,28 @@ si te animas podes empezar por aquí
 
 * **Parte 2: Compilar y ejecutar los ejemplos**
 
+```
+Se usó
+
+./run bios_hello_word
+```
+
 ![paso 1](./images/parte2-paso1.png)
+
+
+```
+Se usó
+
+./run protected_mode
+```
 
 ![paso 1 - protected](./images/parte2-paso1-protected.png)
 
 * **Parte 3: Grabar la imagen y correrla en HW real (Se usa vBox)**
 
-[Link al video deon se carga la vm con protected.img](https://drive.google.com/file/d/1YpCq4X7zdX75tpLB3bAOjuOSMB27jK2I/view?usp=sharing)
+Video donde una vm carga la imagen de preotected: [Link al video deon se carga la vm con protected.img](https://drive.google.com/file/d/1YpCq4X7zdX75tpLB3bAOjuOSMB27jK2I/view?usp=sharing)
+
+Imagenn donde se ve el disco usado (de una vm)
 
 ![paso 3 - disk](./images/parte3-paso1-disk.png)
 
