@@ -68,9 +68,9 @@ qemu-system-x86_64 -hda main.img
 
 Se grabó la imagen en un pendrive usando `dd` para intentar ejecutarla en hardware real.
 
-Primero se identificó el pendrive con `lsblk`:
+Primero se identificó el pendrive con `lsblk`, verificando que `sda` (7.5G, "Generic Flash Disk") era el pendrive y `nvme0n1` el disco interno de la laptop:
 
-![lsblk mostrando los dispositivos — sda identificado como Generic Flash Disk (pendrive)](./Imagenes/lsblk.png)
+![lsblk mostrando sda como Generic Flash Disk (pendrive) y nvme0n1 como disco interno](./Imagenes/lsblk.png)
 
 Se grabó la imagen:
 
@@ -80,15 +80,11 @@ sudo dd if=main.img of=/dev/sda bs=512 count=1 conv=fdatasync
 sudo sync
 ```
 
-![Comando dd grabando la imagen en el pendrive](./Imagenes/dd_command.png)
+![hd verificando la firma 55AA y dd grabando la imagen en el pendrive exitosamente](./Imagenes/dd_command.png)
 
-Se intentó arrancar desde el pendrive en una **HP Pavilion** (firmware UEFI). La BIOS no reconoció el bootloader MBR porque el sistema usa UEFI con Secure Boot. Se configuró la BIOS deshabilitando Secure Boot y poniendo USB Flash Drive primero en el orden de arranque, pero UEFI requiere un ejecutable EFI en una partición ESP — no un MBR legacy:
+Se intentó arrancar desde el pendrive en una **HP Pavilion** (firmware UEFI) y en una **Acer** con BIOS en modo Legacy, pero en ambos casos no fue posible arrancar. La HP con UEFI no reconoce un MBR legacy — requiere un ejecutable EFI en una partición ESP. La Acer en modo Legacy tampoco detectó el dispositivo como arrancable.
 
-![HP Pavilion BIOS — solo muestra opciones UEFI del disco interno, no reconoce el MBR del pendrive](./Imagenes/bios_hp_boot.png)
-
-Se intentó también en una **Acer** con BIOS en modo Legacy con USB HDD primero en el orden de arranque, pero tampoco fue posible arrancar desde el pendrive.
-
-**Conclusión del intento en hardware real:** La ejecución exitosa en QEMU demuestra que el bootloader es correcto. La imposibilidad de ejecutarlo en hardware real ilustra precisamente la diferencia entre BIOS legacy y UEFI tratada en el Desafío 1: la BIOS busca la firma `0x55AA` en el MBR, mientras que UEFI busca un ejecutable PE en la ESP.
+**Conclusión:** La ejecución exitosa en QEMU demuestra que el bootloader es correcto. La imposibilidad de ejecutarlo en hardware real ilustra la diferencia entre BIOS legacy y UEFI: la BIOS busca la firma `0x55AA` en el MBR, mientras que UEFI busca un ejecutable PE en la ESP.
 
 ---
 
