@@ -41,11 +41,54 @@ si te animas podes empezar por aquí
 * https://wiki.osdev.org/UEFI_App_Bare_Bones 
 
 
+## Laboratorio: Compilar y correr una aplicación sin SO
+
+* **Parte 1 – Clonar el repositorio Git y el submódulo**
+
+[path al modulo clonado](./libs/protected-mode-sdc)
+
+* **Paso 2: Trabajando con submódulos.**
+
+![paso 2](./images/paso2.png)
+
+
+![paso 2b](./images/paso2_b.png)
+
+* **Parte 2: Compilar y ejecutar los ejemplos**
+
+![paso 1](./images/parte2-paso1.png)
+
+![paso 1 - protected](./images/parte2-paso1-protected.png)
+
+* **Parte 3: Grabar la imagen y correrla en HW real (Se usa vBox)**
+
+[Link al video deon se carga la vm con protected.img](https://drive.google.com/file/d/1YpCq4X7zdX75tpLB3bAOjuOSMB27jK2I/view?usp=sharing)
+
+![paso 3 - disk](./images/parte3-paso1-disk.png)
+
+1. ¿Se verá afectado el disco de mi PC real? 
+
+No, siempre y cuando selecione la letra correcta. Al estar dentro de una máquina virtual (Mint), el sistema operativo solo ve los dispositivos que la VM le permite ver. El /dev/sdX que ve Mint es un disco virtual (un archivo .vdi o .vmdk en tu Windows).
+
+Peligro: Si por algún error de configuración hubieras montado su disco físico de Windows dentro de la VM (passthrough), entonces sí. Pero por defecto, en VirtualBox/VMware, solo tocas el disco virtual.
+
+2. ¿Se verá afectado el arranque de mi Windows?
+
+No. Windows vive en el disco físico de tu computadora. Tu comando dd afectará únicamente al registro de arranque (MBR) y los sectores del disco virtual de la VM. Windows ni siquiera se enterará de que esto está pasando.
+
+3. ¿Qué va a pasar con la VM cuando grabe y ejecute esto?
+
+Sobreescritura total: Si protected_mode.img es una imagen de un sector de arranque, borrarás el GRUB de Linux Mint.
+
+Mint dejará de arrancar: La próxima vez que reinicies la VM, ya no entrarás a Linux Mint. En su lugar, se ejecutará el código de tu imagen.
+
+Pérdida de datos: Si la imagen .img es grande, sobreescribirá la tabla de particiones y tus archivos de Mint. Si es solo de 512 bytes, solo destruirá el arranque de Mint, pero tus archivos seguirán ahí (aunque inaccesibles sin reparar el boot).
+
 ## Cuestionario
 
 * **Crear un código assembler que pueda pasar a modo protegido (sin macros).**
 
-[ir a code](./code/sin_macros.S)
+[ir a code](./modo-protegido/code/sin_macros.S)
 
 * **¿Cómo sería un programa que tenga dos descriptores de memoria diferentes, uno para cada segmento (código y datos) en espacios de memoria diferenciados?**
 
@@ -130,46 +173,3 @@ El bit 2 es el indicador TI (GDT o LDT).
 Los bits 0-1 son el RPL (Nivel de privilegio requerido, de 0 a 3).
 
 Al cargar 0x08, le dices al procesador: "Usa las reglas (base, límite, permisos) definidas en la entrada 1 de la Tabla Global de Descriptores".
-
-## Laboratorio: Compilar y correr una aplicación sin SO
-
-* **Parte 1 – Clonar el repositorio Git y el submódulo**
-
-[path al modulo clonado](./libs/protected-mode-sdc)
-
-* **Paso 2: Trabajando con submódulos.**
-
-![paso 2](./images/paso2.png)
-
-
-![paso 2b](./images/paso2_b.png)
-
-* **Parte 2: Compilar y ejecutar los ejemplos**
-
-![paso 1](./images/parte2-paso1.png)
-
-![paso 1 - protected](./images/parte2-paso1-protected.png)
-
-* **Parte 3: Grabar la imagen y correrla en HW real (Se usa vBox)**
-
-[Link al video deon se carga la vm con protected.img](https://drive.google.com/file/d/1YpCq4X7zdX75tpLB3bAOjuOSMB27jK2I/view?usp=sharing)
-
-![paso 3 - disk](./images/parte3-paso1-disk.png)
-
-1. ¿Se verá afectado el disco de mi PC real? 
-
-No, siempre y cuando selecione la letra correcta. Al estar dentro de una máquina virtual (Mint), el sistema operativo solo ve los dispositivos que la VM le permite ver. El /dev/sdX que ve Mint es un disco virtual (un archivo .vdi o .vmdk en tu Windows).
-
-Peligro: Si por algún error de configuración hubieras montado su disco físico de Windows dentro de la VM (passthrough), entonces sí. Pero por defecto, en VirtualBox/VMware, solo tocas el disco virtual.
-
-2. ¿Se verá afectado el arranque de mi Windows?
-
-No. Windows vive en el disco físico de tu computadora. Tu comando dd afectará únicamente al registro de arranque (MBR) y los sectores del disco virtual de la VM. Windows ni siquiera se enterará de que esto está pasando.
-
-3. ¿Qué va a pasar con la VM cuando grabe y ejecute esto?
-
-Sobreescritura total: Si protected_mode.img es una imagen de un sector de arranque, borrarás el GRUB de Linux Mint.
-
-Mint dejará de arrancar: La próxima vez que reinicies la VM, ya no entrarás a Linux Mint. En su lugar, se ejecutará el código de tu imagen.
-
-Pérdida de datos: Si la imagen .img es grande, sobreescribirá la tabla de particiones y tus archivos de Mint. Si es solo de 512 bytes, solo destruirá el arranque de Mint, pero tus archivos seguirán ahí (aunque inaccesibles sin reparar el boot).
