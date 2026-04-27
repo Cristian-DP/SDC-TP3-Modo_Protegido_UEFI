@@ -32,7 +32,7 @@ ld --oformat binary -o main.img -T link.ld main.o
 ls -la main.img   # debe pesar exactamente 512 bytes
 ```
 
-![Compilación exitosa — main.img de 512 bytes](./Imagenes/compilacion.png)
+![Compilación exitosa — main.img de 512 bytes](./Imagenes/compilacion_helloworld.png)
 
 #### Inspección con objdump
 
@@ -86,10 +86,7 @@ Se intentó arrancar desde el pendrive en una **HP Pavilion** (firmware UEFI). L
 
 ![HP Pavilion BIOS — solo muestra opciones UEFI del disco interno, no reconoce el MBR del pendrive](./Imagenes/bios_hp_boot.png)
 
-Se intentó también en una **Acer** con BIOS legacy. Se configuró Boot Mode en Legacy y USB HDD primero en el orden de arranque:
-
-![Acer BIOS — Security con Secure Boot en Standard](./Imagenes/bios_acer_security.png)
-![Acer BIOS — Boot con USB HDD primero en modo Legacy](./Imagenes/bios_acer_boot.png)
+Se intentó también en una **Acer** con BIOS en modo Legacy con USB HDD primero en el orden de arranque, pero tampoco fue posible arrancar desde el pendrive.
 
 **Conclusión del intento en hardware real:** La ejecución exitosa en QEMU demuestra que el bootloader es correcto. La imposibilidad de ejecutarlo en hardware real ilustra precisamente la diferencia entre BIOS legacy y UEFI tratada en el Desafío 1: la BIOS busca la firma `0x55AA` en el MBR, mientras que UEFI busca un ejecutable PE en la ESP.
 
