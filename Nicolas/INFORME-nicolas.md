@@ -282,11 +282,7 @@ gdb
 
 Se avanzó instrucción a instrucción con `si`. Se observa cómo las direcciones avanzan desde `0x7c00` hasta `0x7c2d` (el `ljmp`) y luego el procesador salta al modo protegido:
 
-![Avance instrucción a instrucción con si — desde 0x7c00 hasta el ljmp en 0x7c2d](./Imagenes/gdb_si.png)
-
 ![Vista conjunta GDB + QEMU mostrando la ejecución del bootloader](./Imagenes/gdb_qemu_juntos.png)
-
-![QEMU arrancando el bootloader — "Booting from Hard Disk"](./Imagenes/qemu_protected.png)
 
 #### Dos descriptores de memoria diferenciados
 
